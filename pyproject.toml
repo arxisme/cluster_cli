@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cluster-cli"
+version = "0.1.0"
+dependencies = [
+    "typer",
+    "rich",
+    "fabric",
+    "pipreqs",
+    "pyyaml",
+]
+
+[project.scripts]
+cluster = "cluster_cli.main:app"
+
+[tool.setuptools.packages.find]
+include = ["cluster_cli*"]
