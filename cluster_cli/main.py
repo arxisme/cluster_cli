@@ -398,5 +398,64 @@ def logs(
         console.print(f"\n[bold red]SSH/Log Error:[/bold red] {e}")
         raise typer.Exit(code=1)
 
+@app.command()
+def pull(ask_pass: bool = typer.Option(False, "--ask-pass", "-p", help="Prompt for SSH password")):
+    """Pull the results folder from the cluster to your local machine."""
+    base_dir = Path.cwd()
+    yaml_path = base_dir / "cluster.yaml"
+    
+    if not yaml_path.exists():
+        console.print("[bold red]Error:[/bold red] cluster.yaml not found.")
+        raise typer.Exit(code=1)
+
+    with open(yaml_path, "r") as f:
+        config = yaml.safe_load(f)
+
+    project_name = config.get("project_name", "Unknown")
+    user = config["cluster"].get("user")
+    host = config["cluster"].get("host", "172.16.112.202")
+
+    connect_kwargs = {}
+    if ask_pass:
+        password = typer.prompt(f"Enter SSH password for {user}@{host}", hide_input=True)
+        connect_kwargs["password"] = password
+
+    console.print(f"[bold cyan]Pulling results for {project_name}...[/bold cyan]")
+
+    try:
+        with Connection(host=host, user=user, connect_kwargs=connect_kwargs) as c:
+            remote_dir = f"projects/{project_name}/results"
+            remote_tar = f"projects/{project_name}/results_sync.tar.gz"
+            local_tar = base_dir / "results_sync.tar.gz"
+
+            # 1. Verify remote directory exists
+            check = c.run(f"test -d {remote_dir}", warn=True, hide=True)
+            if check.failed:
+                console.print("[bold yellow]No results folder found on the cluster yet.[/bold yellow]")
+                raise typer.Exit()
+
+            # 2. Archive remote files
+            console.print("  [dim]Archiving remote files...[/dim]")
+            c.run(f"cd projects/{project_name} && tar -czf results_sync.tar.gz results/", hide=True)
+
+            # 3. Download the archive
+            console.print("  [dim]Downloading to local machine...[/dim]")
+            c.get(remote_tar, str(local_tar))
+
+            # 4. Extract locally (this safely merges with your local folder)
+            console.print("  [dim]Extracting files...[/dim]")
+            subprocess.run(["tar", "-xzf", str(local_tar)], check=True)
+
+            # 5. Clean up temporary archives
+            c.run(f"rm {remote_tar}", hide=True)
+            if local_tar.exists():
+                local_tar.unlink()
+
+            console.print("[bold green]✓ Results successfully synced to ./results/[/bold green]")
+
+    except Exception as e:
+        console.print(f"\n[bold red]SSH/Transfer Error:[/bold red] {e}")
+        raise typer.Exit(code=1)
+
 if __name__ == "__main__":
     app()
