@@ -217,7 +217,6 @@ def run(ask_pass: bool = typer.Option(False, "--ask-pass", "-p", help="Prompt fo
                 raise typer.Exit(code=1)
 
             console.print("[bold yellow]Syncing workspace (src, models, datasets)...[/bold yellow]")
-            import subprocess
             subprocess.run(["tar", "-czf", "sync.tar.gz", "src", "models", "datasets"], check=True)
             c.put(str(base_dir / "sync.tar.gz"), f"projects/{project_name}/sync.tar.gz")
             c.run(f"cd projects/{project_name} && tar -xzf sync.tar.gz && rm sync.tar.gz", hide=True)
