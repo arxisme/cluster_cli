@@ -8,3 +8,4 @@ build/
 *.sif
 *.out
 *.err
+.gitignore
