@@ -8,9 +8,10 @@ A lightweight, personal cluster orchestrator designed to streamline High-Perform
 
 - **📂 Project Scaffolding (`cluster init`)**: Automatically generates a standardized project structure with pre-configured YAML settings, stub scripts, and directories.
 - **🐳 Dynamic Apptainer Builds (`cluster build`)**: Auto-detects Python dependencies using `pipreqs`, generates custom `apptainer.def` definition files, and builds container images (`.sif`).
-- **⚡ Remote Execution & SLURM Integration (`cluster run`)**: Syncs container images and source code over SSH using `Fabric`, generates automated SLURM submission scripts (`submit.sh`), and tracks job execution state.
+- **⚡ Remote Execution & SLURM Integration (`cluster run`)**: Compresses and syncs container images, source code, models, and datasets over SSH, generates automated SLURM submission scripts (`submit.sh`), and tracks job execution state.
 - **📊 Real-Time Job Monitoring (`cluster status`)**: Queries `scontrol` and `sacct` over SSH to display rich, color-coded status tables of your running jobs.
 - **📜 Instant Log Access (`cluster logs`)**: Fetches and formats remote stdout and stderr log outputs neatly in your terminal.
+- **📥 Results Syncing (`cluster pull`)**: Fetches and extracts generated experimental output from the cluster's results directory back to your local machine.
 
 ---
 
@@ -70,7 +71,7 @@ cluster build
 ```
 
 ### 3. Run Pipeline on Cluster
-Execute preparation steps, upload assets via SSH, and submit the SLURM job:
+Execute preparation steps, archive and sync your workspace (`src`, `models`, `datasets`), and submit the SLURM job:
 ```bash
 cluster run
 # Prompt for SSH password if key-based authentication is not configured:
@@ -89,6 +90,14 @@ Fetch standard output and error logs directly from the cluster:
 cluster logs
 # View only error logs:
 cluster logs --error
+```
+
+### 6. Pull Results
+Download and extract generated experimental output files from the cluster back to your local `./results/` directory:
+```bash
+cluster pull
+# Prompt for SSH password if needed:
+cluster pull --ask-pass
 ```
 
 ---

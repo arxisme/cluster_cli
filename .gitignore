@@ -9,3 +9,4 @@ build/
 *.out
 *.err
 .gitignore
+*.tar.gz

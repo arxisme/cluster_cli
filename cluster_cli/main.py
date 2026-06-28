@@ -216,8 +216,12 @@ def run(ask_pass: bool = typer.Option(False, "--ask-pass", "-p", help="Prompt fo
                 console.print(f"[bold red]Error:[/bold red] {image_name} not found. Run 'cluster build' first.")
                 raise typer.Exit(code=1)
 
-            console.print("[bold yellow]Transferring source code...[/bold yellow]")
-            c.put(str(base_dir / "src" / "train.py"), f"projects/{project_name}/src/train.py")
+            console.print("[bold yellow]Syncing workspace (src, models, datasets)...[/bold yellow]")
+            import subprocess
+            subprocess.run(["tar", "-czf", "sync.tar.gz", "src", "models", "datasets"], check=True)
+            c.put(str(base_dir / "sync.tar.gz"), f"projects/{project_name}/sync.tar.gz")
+            c.run(f"cd projects/{project_name} && tar -xzf sync.tar.gz && rm sync.tar.gz", hide=True)
+            (base_dir / "sync.tar.gz").unlink()
 
             # 3. Generate SLURM Script
             console.print("[bold cyan]Generating SLURM script...[/bold cyan]")
@@ -238,6 +242,8 @@ def run(ask_pass: bool = typer.Option(False, "--ask-pass", "-p", help="Prompt fo
                 echo "Job $SLURM_JOB_ID running on $(hostname)"
                 
                 cp -r $HOME/projects/{project_name}/src ./
+                cp -r $HOME/projects/{project_name}/models ./
+                cp -r $HOME/projects/{project_name}/datasets ./
                 cp $HOME/containers/{image_name} ./
                 mkdir -p ./results
 
